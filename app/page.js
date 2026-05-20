@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 
 const API = 'https://fester-yonder-stoplight.ngrok-free.dev';
+const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
 
 export default function Home() {
   const [screen, setScreen] = useState('login');
@@ -23,8 +24,8 @@ export default function Home() {
     setAuthError('');
     try {
       const res = await fetch(`${API}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', ...NGROK_HEADER },
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
@@ -45,7 +46,7 @@ export default function Home() {
       form.append('password', password);
       const res = await fetch(`${API}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...NGROK_HEADER },
         body: form
       });
       const data = await res.json();
@@ -93,7 +94,7 @@ export default function Home() {
       formData.append('file', blob, 'recording.webm');
       const res = await fetch(`${API}/audio/process`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 'Authorization': `Bearer ${token}`, ...NGROK_HEADER },
         body: formData,
       });
       const data = await res.json();
@@ -107,7 +108,7 @@ export default function Home() {
 
   const loadPlans = async () => {
     try {
-      const res = await fetch(`${API}/payment/plans`);
+      const res = await fetch(`${API}/payment/plans`, { headers: NGROK_HEADER });
       const data = await res.json();
       setPlans(data.plans);
       setShowPlans(true);
