@@ -1,8 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 
-const API = 'https://fester-yonder-stoplight.ngrok-free.dev';
-const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
+const API = 'https://use-ai-malayalamai-production-ee70.up.railway.app';
 
 export default function Home() {
   const [screen, setScreen] = useState('login');
@@ -24,8 +23,8 @@ export default function Home() {
     setAuthError('');
     try {
       const res = await fetch(`${API}/auth/register`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', ...NGROK_HEADER },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
@@ -46,7 +45,7 @@ export default function Home() {
       form.append('password', password);
       const res = await fetch(`${API}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...NGROK_HEADER },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: form
       });
       const data = await res.json();
@@ -94,7 +93,7 @@ export default function Home() {
       formData.append('file', blob, 'recording.webm');
       const res = await fetch(`${API}/audio/process`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, ...NGROK_HEADER },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
       const data = await res.json();
@@ -108,7 +107,7 @@ export default function Home() {
 
   const loadPlans = async () => {
     try {
-      const res = await fetch(`${API}/payment/plans`, { headers: NGROK_HEADER });
+      const res = await fetch(`${API}/payment/plans`);
       const data = await res.json();
       setPlans(data.plans);
       setShowPlans(true);
@@ -162,7 +161,6 @@ export default function Home() {
     }
   };
 
-  // LOGIN / REGISTER SCREEN
   if (screen === 'login' || screen === 'register') {
     return (
       <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6">
@@ -207,7 +205,6 @@ export default function Home() {
     );
   }
 
-  // MAIN APP SCREEN
   return (
     <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md">
@@ -231,7 +228,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
         <div className="flex flex-col items-center mb-8">
           <button
             onClick={recording ? stopRecording : startRecording}
@@ -247,11 +243,9 @@ export default function Home() {
             {recording ? 'Recording... tap to stop' : loading ? 'Processing...' : 'Tap to start recording'}
           </p>
         </div>
-
         {error && (
           <div className="bg-red-900 border border-red-600 rounded-lg p-4 mb-4 text-sm text-red-200">{error}</div>
         )}
-
         {result && (
           <div className="space-y-4">
             <div className="bg-gray-800 rounded-lg p-4">
@@ -269,7 +263,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
       {showPlans && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-md">
