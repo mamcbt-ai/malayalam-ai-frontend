@@ -232,7 +232,7 @@ export default function Home() {
         <div className="flex flex-col items-center mb-6">
           <button onClick={recording ? stopRecording : startRecording} disabled={loading}
             className={`w-28 h-28 rounded-full text-4xl transition-all duration-200 shadow-lg ${recording ? 'bg-red-600 hover:bg-red-700 animate-pulse' : loading ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}>
-            {loading ? '?' : recording ? '?' : '??'}
+            {loading ? '⏳' : recording ? '⏹' : '🎤'}
           </button>
           <p className="mt-4 text-sm text-gray-400">
             {recording ? 'Recording... tap to stop' : loading ? 'Processing...' : 'Tap to start recording'}
@@ -320,6 +320,3 @@ export default function Home() {
     </main>
   );
 }
-
-
-
