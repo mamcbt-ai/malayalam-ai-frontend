@@ -2,7 +2,6 @@
 import { useState, useRef } from 'react';
 const API = 'https://use-ai-malayalamai-production-ee70.up.railway.app';
 const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
-
 const STYLES = [
   { key: 'standard',  label: 'Standard' },
   { key: 'formal',    label: 'Formal' },
@@ -16,7 +15,6 @@ const STYLES = [
   { key: 'emotional', label: 'Emotional' },
   { key: 'bullet',    label: 'Bullet Points' },
 ];
-
 export default function Home() {
   const [screen, setScreen] = useState('login');
   const [email, setEmail] = useState('');
@@ -35,6 +33,8 @@ export default function Home() {
   const [refinedText, setRefinedText] = useState('');
   const [isDone, setIsDone] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState('standard');
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const resetResults = () => {
@@ -53,6 +53,20 @@ export default function Home() {
       if (!res.ok) throw new Error(data.detail || 'Registration failed');
       setToken(data.token); setUserEmail(data.email); setScreen('app');
     } catch (e) { setAuthError(e.message); }
+  };
+  const handleForgotPassword = async () => {
+    if (!email) { setAuthError('Enter your email address first.'); return; }
+    setForgotLoading(true); setAuthError('');
+    try {
+      const res = await fetch(`${API}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...NGROK_HEADER },
+        body: JSON.stringify({ email })
+      });
+      if (res.ok) { setForgotSent(true); }
+      else { setAuthError('Could not send reset email. Please try again.'); }
+    } catch (e) { setAuthError('Could not reach server. Please try again.'); }
+    finally { setForgotLoading(false); }
   };
   const handleLogin = async () => {
     setAuthError('');
@@ -176,10 +190,20 @@ export default function Home() {
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
             className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-4 text-white placeholder-gray-400 outline-none" />
           {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
+          {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent — check your inbox.</p>}
           <button onClick={screen === 'login' ? handleLogin : handleRegister}
-            className="w-full bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold mb-4">
+            className="w-full bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold mb-3">
             {screen === 'login' ? 'Login' : 'Register'}
           </button>
+          {screen === 'login' && (
+            <p className="text-center text-sm mb-4">
+              <span
+                onClick={handleForgotPassword}
+                className={`text-gray-500 hover:text-gray-300 cursor-pointer underline underline-offset-2 text-xs ${forgotLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+                {forgotLoading ? 'Sending...' : 'Forgot password?'}
+              </span>
+            </p>
+          )}
           <p className="text-center text-sm text-gray-400">
             {screen === 'login' ? "Don't have an account? " : "Already have an account? "}
             <span onClick={() => { setScreen(screen === 'login' ? 'register' : 'login'); setAuthError(''); }}
