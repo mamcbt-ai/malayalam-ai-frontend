@@ -18,6 +18,9 @@ const STYLES = [
 const LANGUAGES = [
   { key: 'ml', label: 'Malayalam' },
   { key: 'ta', label: 'Tamil' },
+  { key: 'te', label: 'Telugu' },
+  { key: 'kn', label: 'Kannada' },
+  { key: 'hi', label: 'Hindi' },
 ];
 export default function Home() {
   const [screen, setScreen] = useState('login');
