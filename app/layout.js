@@ -24,6 +24,7 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500&display=swap" rel="stylesheet" />
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="beforeInteractive"

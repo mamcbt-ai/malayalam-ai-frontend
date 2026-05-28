@@ -24,3 +24,5 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.ml-text { font-family: 'Noto Sans Malayalam', sans-serif; line-height: 1.8; }

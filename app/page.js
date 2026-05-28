@@ -1,4 +1,5 @@
-﻿'use client';
+'use client';
+import { useEffect } from 'react';
 import { useState, useRef } from 'react';
 const API = 'https://use-ai-malayalamai-production-ee70.up.railway.app';
 const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
@@ -190,7 +191,7 @@ export default function Home() {
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
             className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-4 text-white placeholder-gray-400 outline-none" />
           {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
-          {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent — check your inbox.</p>}
+          {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent � check your inbox.</p>}
           <button onClick={screen === 'login' ? handleLogin : handleRegister}
             className="w-full bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold mb-3">
             {screen === 'login' ? 'Login' : 'Register'}
@@ -232,7 +233,7 @@ export default function Home() {
         <div className="flex flex-col items-center mb-6">
           <button onClick={recording ? stopRecording : startRecording} disabled={loading}
             className={`w-28 h-28 rounded-full text-4xl transition-all duration-200 shadow-lg ${recording ? 'bg-red-600 hover:bg-red-700 animate-pulse' : loading ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}>
-            {loading ? '⏳' : recording ? '⏹' : '🎤'}
+            {loading ? '?' : recording ? '?' : '??'}
           </button>
           <p className="mt-4 text-sm text-gray-400">
             {recording ? 'Recording... tap to stop' : loading ? 'Processing...' : 'Tap to start recording'}
@@ -277,7 +278,7 @@ export default function Home() {
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <p className="text-xs text-green-400 mb-2 uppercase tracking-wide">
-                English Translation · <span className="capitalize text-green-300">{selectedStyle}</span>
+                English Translation � <span className="capitalize text-green-300">{selectedStyle}</span>
               </p>
               <p className="text-white leading-relaxed min-h-6">
                 {refinedText ? refinedText : isDone ? englishLive : <span className="text-gray-500 italic text-sm">Available after transcription...</span>}
@@ -285,7 +286,7 @@ export default function Home() {
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <p className="text-xs text-blue-400 mb-2 uppercase tracking-wide">Malayalam (Unicode)</p>
-              <p className="text-white text-xl leading-relaxed min-h-6">
+              <p className="text-white text-xl leading-relaxed min-h-6 ml-text">
                 {malayalamLive ? malayalamLive : <span className="text-gray-500 italic text-sm">Available after English pass...</span>}
               </p>
             </div>
@@ -320,3 +321,5 @@ export default function Home() {
     </main>
   );
 }
+
+
