@@ -148,6 +148,7 @@ export default function Home() {
           if (evt.type === 'status') { setStreamStatus(evt.message); setLoading(false); }
           else if (evt.type === 'english_segment') { setEnglishLive(evt.accumulated); setStreamStatus('Transcribing English...'); setLoading(false); }
           else if (evt.type === 'malayalam_segment') { setMalayalamLive(evt.accumulated); setStreamStatus('Transcribing Malayalam...'); }
+          else if (evt.type === 'error') { setStreamStatus('Error: ' + (evt.error || 'Transcription failed. Check API key.')); setIsDone(true); }
           else if (evt.type === 'complete') { setEnglishLive(evt.english_text); setMalayalamLive(evt.malayalam_text); setRefinedText(evt.refined_text || evt.english_text); setStreamStatus(''); setIsDone(true); }
           else if (evt.type === 'error') { setError('Error: ' + evt.message); }
         }
