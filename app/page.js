@@ -2,10 +2,6 @@
 import { useState, useRef } from 'react';
 const API = 'https://use-ai-malayalamai-production-ee70.up.railway.app';
 const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
-const LANGUAGES = [
-  \{ key: 'ml', label: 'Malayalam', nativeLabel: 'Malayalam (Unicode)' \},
-  \{ key: 'ta', label: 'Tamil', nativeLabel: 'Tamil (Unicode)' \},
-];
 const STYLES = [
   { key: 'standard',  label: 'Standard' },
   { key: 'formal',    label: 'Formal' },
@@ -18,6 +14,10 @@ const STYLES = [
   { key: 'humorous',  label: 'Humorous' },
   { key: 'emotional', label: 'Emotional' },
   { key: 'bullet',    label: 'Bullet Points' },
+];
+const LANGUAGES = [
+  { key: 'ml', label: 'Malayalam' },
+  { key: 'ta', label: 'Tamil' },
 ];
 export default function Home() {
   const [screen, setScreen] = useState('login');
@@ -246,6 +246,15 @@ export default function Home() {
         </div>
         <div className="mb-6">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 text-center">INPUT LANGUAGE</p>
+              <div className="flex flex-wrap gap-2 justify-center mb-4">
+                {LANGUAGES.map(l => (
+                  <button key={l.key} onClick={() => setSelectedLang(l.key)}
+                    className={`px-4 py-1 rounded-full text-sm border transition-all ${selectedLang === l.key ? "bg-blue-500 text-white border-blue-500 font-semibold" : "bg-transparent text-gray-400 border-gray-600"}`}>
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 text-center">Translation Style</p>
           <div className="flex flex-wrap gap-2 justify-center">
             {STYLES.map(({ key, label }) => (
               <button
@@ -280,18 +289,7 @@ export default function Home() {
               <p className="text-white leading-relaxed min-h-6">
                 {englishLive ? englishLive : <span className="text-gray-500 italic text-sm">Waiting for speech...</span>}
               </p>
-            <div className="mt-4 mb-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 text-center">Input Language</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {LANGUAGES.map(l => (
-                  <button key={l.key} onClick={() => setSelectedLang(l.key)}
-                    className={`px-3 py-1 rounded-full text-sm border transition-all ${selectedLang === l.key ? "bg-green-500 text-black border-green-500 font-semibold" : "bg-transparent text-gray-400 border-gray-600 hover:border-gray-400"}`}>
-                    {l.label}
-                  </button>
-                ))}
-              </div>
             </div>
-            <</div>
             <div className="bg-gray-800 rounded-lg p-4">
               <p className="text-xs text-green-400 mb-2 uppercase tracking-wide">
                 English Translation · <span className="capitalize text-green-300">{selectedStyle}</span>
@@ -299,18 +297,7 @@ export default function Home() {
               <p className="text-white leading-relaxed min-h-6">
                 {refinedText ? refinedText : isDone ? englishLive : <span className="text-gray-500 italic text-sm">Available after transcription...</span>}
               </p>
-            <div className="mt-4 mb-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 text-center">Input Language</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {LANGUAGES.map(l => (
-                  <button key={l.key} onClick={() => setSelectedLang(l.key)}
-                    className={`px-3 py-1 rounded-full text-sm border transition-all ${selectedLang === l.key ? "bg-green-500 text-black border-green-500 font-semibold" : "bg-transparent text-gray-400 border-gray-600 hover:border-gray-400"}`}>
-                    {l.label}
-                  </button>
-                ))}
-              </div>
             </div>
-            <</div>
             <div className="bg-gray-800 rounded-lg p-4">
               <p className="text-xs text-blue-400 mb-2 uppercase tracking-wide">Malayalam (Unicode)</p>
               <p className="text-white text-xl leading-relaxed min-h-6 ml-text">
