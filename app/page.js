@@ -1,4 +1,4 @@
-'use client';
+ï»¿'use client';
 import { useState, useRef } from 'react';
 const API = 'https://use-ai-malayalamai-production-ee70.up.railway.app';
 const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
@@ -190,7 +190,7 @@ export default function Home() {
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
             className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-4 text-white placeholder-gray-400 outline-none" />
           {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
-          {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent — check your inbox.</p>}
+          {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent â€” check your inbox.</p>}
           <button onClick={screen === 'login' ? handleLogin : handleRegister}
             className="w-full bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold mb-3">
             {screen === 'login' ? 'Login' : 'Register'}
@@ -277,7 +277,7 @@ export default function Home() {
             </div>
             <div className="bg-gray-800 rounded-lg p-4">
               <p className="text-xs text-green-400 mb-2 uppercase tracking-wide">
-                English Translation · <span className="capitalize text-green-300">{selectedStyle}</span>
+                English Translation Â· <span className="capitalize text-green-300">{selectedStyle}</span>
               </p>
               <p className="text-white leading-relaxed min-h-6">
                 {refinedText ? refinedText : isDone ? englishLive : <span className="text-gray-500 italic text-sm">Available after transcription...</span>}
