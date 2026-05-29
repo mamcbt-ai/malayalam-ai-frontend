@@ -149,7 +149,19 @@ export default function Home() {
           else if (evt.type === 'english_segment') { setEnglishLive(evt.accumulated); setStreamStatus('Transcribing English...'); setLoading(false); }
           else if (evt.type === 'malayalam_segment') { setMalayalamLive(evt.accumulated); setStreamStatus('Transcribing Malayalam...'); }
           else if (evt.type === 'error') { setStreamStatus('Error: ' + (evt.error || 'Transcription failed. Check API key.')); setIsDone(true); }
-          else if (evt.type === 'complete') { setEnglishLive(evt.english_text); setMalayalamLive(evt.malayalam_text); setRefinedText(evt.refined_text || evt.english_text); setStreamStatus(''); setIsDone(true); }
+          else if (evt.type === 'complete') {
+            const eng = evt.english_text || '';
+            const mal = evt.malayalam_text || '';
+            if (!eng && !mal) {
+              setError('No speech detected. Please speak clearly and try again.');
+            } else {
+              setEnglishLive(eng);
+              setMalayalamLive(mal);
+              setRefinedText(evt.refined_text || eng);
+            }
+            setStreamStatus('');
+            setIsDone(true);
+          }
           else if (evt.type === 'error') { setError('Error: ' + evt.message); }
         }
       }
@@ -198,6 +210,7 @@ export default function Home() {
           <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
             className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-3 text-white placeholder-gray-400 outline-none" />
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (screen === 'login' ? handleLogin() : handleRegister())}
             className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-4 text-white placeholder-gray-400 outline-none" />
           {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
           {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent — check your inbox.</p>}
@@ -225,7 +238,7 @@ export default function Home() {
       </main>
     );
   }
-  const hasContent = englishLive || malayalamLive || refinedText || streamStatus || loading;
+  const hasContent = englishLive || malayalamLive || refinedText || streamStatus || loading || error;
   return (
     <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md">
