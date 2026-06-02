@@ -237,8 +237,12 @@ export default function Home() {
       setError(''); setIsDone(false);
       setStreamStatus('Processing your speech...');
 
+      // Use correct extension for iOS (mp4) vs Chrome/Firefox (webm)
+      const ext = blob.type.includes('mp4') ? 'mp4'
+                : blob.type.includes('ogg') ? 'ogg'
+                : 'webm';
       const formData = new FormData();
-      formData.append('file',  blob, 'recording.webm');
+      formData.append('file',  blob, `recording.${ext}`);
       formData.append('style', selectedStyle);
       formData.append('lang',  selectedLang);
 
