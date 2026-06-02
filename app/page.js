@@ -112,17 +112,27 @@ export default function Home() {
       const form = new URLSearchParams();
       form.append('username', email.trim());
       form.append('password', password);
-      const res  = await fetch(API('/auth/login'), {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      const res = await fetch(API('/auth/login'), {
         method:  'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body:    form,
+        signal:  controller.signal,
       });
+      clearTimeout(timeout);
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Login failed');
       localStorage.setItem('diya_token', data.access_token);
       localStorage.setItem('diya_email', data.email);
       setToken(data.access_token); setUserEmail(data.email); setScreen('app');
-    } catch (err) { setAuthError(err.message); }
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        setAuthError('Connection timed out. Check your internet and try again.');
+      } else {
+        setAuthError(err.message);
+      }
+    }
     finally { setLoading(false); }
   };
 
