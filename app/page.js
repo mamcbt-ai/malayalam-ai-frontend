@@ -163,21 +163,43 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem('diya_token');
     localStorage.removeItem('diya_email');
-    setToken(''); setUserEmail(''); setScreen('login'); resetResults();
+    setToken(''); setUserEmail(''); setEmail(''); setPassword('');
+    setAuthError(''); setForgotSent(false); setShowPlans(false);
+    setScreen('login'); resetResults();
+  };
+
+  // ── Safari-safe MIME detection ────────────────────────────────────────────
+  const getSupportedMimeType = () => {
+    const candidates = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4',
+      'audio/aac',
+      'audio/ogg;codecs=opus',
+    ];
+    for (const type of candidates) {
+      if (window.MediaRecorder?.isTypeSupported?.(type)) return type;
+    }
+    return ''; // let browser choose
   };
 
   // ── Recording ─────────────────────────────────────────────────────────────
   const startRecording = async () => {
     resetResults();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream   = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
-      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const mimeType = getSupportedMimeType();
+      const mr       = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
       mediaRecorderRef.current = mr;
       chunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
       mr.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const finalType = mimeType || chunksRef.current[0]?.type || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: finalType });
         setLoading(true); setStreamStatus('Uploading audio...');
         await sendAudio(blob);
         if (mediaStreamRef.current) {
@@ -185,9 +207,11 @@ export default function Home() {
           mediaStreamRef.current = null;
         }
       };
-      mr.start();
+      mr.start(250);
       setRecording(true);
-    } catch { setError('Microphone access denied.'); }
+    } catch {
+      setError('Microphone access denied or recording is not supported on this device.');
+    }
   };
 
   const stopRecording = () => {
@@ -253,6 +277,10 @@ export default function Home() {
   };
 
   const handlePayment = async (planId) => {
+    if (!window.Razorpay) {
+      alert('Payment system is still loading. Please try again in a moment.');
+      return;
+    }
     try {
       const order = await fetch(API('/payment/create-order'), {
         method:  'POST',
@@ -375,7 +403,7 @@ export default function Home() {
           <div className="flex flex-wrap gap-2 justify-center">
             {LANGUAGES.map(l => (
               <button key={l.key}
-                onClick={() => setSelectedLang(l.key)}
+                onClick={() => { setSelectedLang(l.key); resetResults(); }}
                 disabled={recording || loading}
                 className={`px-4 py-1.5 rounded-full text-sm border transition-all
                   ${selectedLang === l.key
@@ -394,7 +422,7 @@ export default function Home() {
           <div className="flex flex-wrap gap-2 justify-center">
             {STYLES.map(s => (
               <button key={s.key}
-                onClick={() => setSelectedStyle(s.key)}
+                onClick={() => { setSelectedStyle(s.key); resetResults(); }}
                 disabled={recording || loading}
                 className={`px-3 py-1 rounded-full text-xs font-medium border transition-all
                   ${selectedStyle === s.key
