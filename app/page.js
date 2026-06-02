@@ -238,7 +238,7 @@ export default function Home() {
       const order = await res.json();
       new window.Razorpay({
         key: order.key_id, amount: order.amount, currency: order.currency,
-        name: 'Malayalam Voice AI', description: `${planId} Plan`, order_id: order.order_id,
+        name: 'Diya Voice AI', description: `${planId} Plan`, order_id: order.order_id,
         handler: async (response) => {
           const v = await fetch(`${API_BASE}/payment/verify`, {
             method: 'POST',
@@ -256,7 +256,7 @@ export default function Home() {
   if (screen !== 'app') {
     return (
       <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6">
-        <h1 className="text-3xl font-bold mb-2 text-green-400">Malayalam Voice AI</h1>
+        <h1 className="text-3xl font-bold mb-2 text-green-400">Diya Voice AI</h1>
         <p className="text-gray-400 mb-8 text-sm">Speak any Indian language — get instant English translation</p>
         <div className="bg-gray-800 rounded-2xl p-8 w-full max-w-sm">
           {/* Login / Register toggle */}
@@ -305,7 +305,7 @@ export default function Home() {
 
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-green-400">Malayalam Voice AI</h1>
+          <h1 className="text-2xl font-bold text-green-400">Diya Voice AI</h1>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500 hidden sm:block">{userEmail}</span>
             <button onClick={loadPlans} className="text-xs text-yellow-400 border border-yellow-600 rounded px-2 py-1 hover:bg-yellow-400/10 transition">⭐ Upgrade</button>

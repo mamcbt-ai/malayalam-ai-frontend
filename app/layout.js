@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Malayalam Voice AI",
+  title: "Diya Voice AI",
   description: "Speak Malayalam — get instant English translation",
 };
 
