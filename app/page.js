@@ -1,22 +1,19 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-const API_BASE = 'https://use-ai-malayalamai-production-ee70.up.railway.app';
-const NGROK_HEADER = { 'ngrok-skip-browser-warning': 'true' };
+// ── Config ────────────────────────────────────────────────────────────────────
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
+  || 'https://use-ai-malayalamai-production-ee70.up.railway.app';
+const API = (path) => `${API_BASE}${path}`;
 
-const STYLES = [
-  { key: 'standard',  label: 'Standard' },
-  { key: 'formal',    label: 'Formal' },
-  { key: 'casual',    label: 'Casual' },
-  { key: 'news',      label: 'News' },
-  { key: 'literary',  label: 'Literary' },
-  { key: 'business',  label: 'Business' },
-  { key: 'academic',  label: 'Academic' },
-  { key: 'simple',    label: 'Simple' },
-  { key: 'humorous',  label: 'Humorous' },
-  { key: 'emotional', label: 'Emotional' },
-  { key: 'bullet',    label: 'Bullet Points' },
-];
+// ── Constants ─────────────────────────────────────────────────────────────────
+const LANGUAGE_LABELS = {
+  ml: 'MALAYALAM UNICODE',
+  ta: 'TAMIL UNICODE',
+  te: 'TELUGU UNICODE',
+  kn: 'KANNADA UNICODE',
+  hi: 'HINDI UNICODE',
+};
 
 const LANGUAGES = [
   { key: 'ml', label: 'Malayalam' },
@@ -26,55 +23,78 @@ const LANGUAGES = [
   { key: 'hi', label: 'Hindi' },
 ];
 
-const NATIVE_LABELS = {
-  ml: 'MALAYALAM UNICODE',
-  ta: 'TAMIL UNICODE',
-  te: 'TELUGU UNICODE',
-  kn: 'KANNADA UNICODE',
-  hi: 'HINDI UNICODE',
-};
+const STYLES = [
+  { key: 'standard',  label: 'Standard'  },
+  { key: 'formal',    label: 'Formal'    },
+  { key: 'casual',    label: 'Casual'    },
+  { key: 'news',      label: 'News'      },
+  { key: 'literary',  label: 'Literary'  },
+  { key: 'business',  label: 'Business'  },
+  { key: 'academic',  label: 'Academic'  },
+  { key: 'simple',    label: 'Simple'    },
+  { key: 'humorous',  label: 'Humorous'  },
+  { key: 'emotional', label: 'Emotional' },
+  { key: 'bullet',    label: 'Bullet Points' },
+];
 
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function Home() {
-  const [screen, setScreen]               = useState('login');
-  const [email, setEmail]                 = useState('');
-  const [password, setPassword]           = useState('');
-  const [token, setToken]                 = useState(null);
-  const [userEmail, setUserEmail]         = useState('');
-  const [authError, setAuthError]         = useState('');
-  const [authMode, setAuthMode]           = useState('login');
+  // Auth state
+  const [screen,      setScreen]      = useState('login');
+  const [authMode,    setAuthMode]    = useState('login');
+  const [email,       setEmail]       = useState('');
+  const [password,    setPassword]    = useState('');
+  const [token,       setToken]       = useState('');
+  const [userEmail,   setUserEmail]   = useState('');
+  const [authError,   setAuthError]   = useState('');
+  const [forgotSent,  setForgotSent]  = useState(false);
+  const [forgotLoad,  setForgotLoad]  = useState(false);
 
-  const [recording, setRecording]         = useState(false);
-  const [loading, setLoading]             = useState(false);
-  const [error, setError]                 = useState('');
-  const [streamStatus, setStreamStatus]   = useState('');
+  // Recording state
+  const [recording,     setRecording]     = useState(false);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState('');
+  const [streamStatus,  setStreamStatus]  = useState('');
+  const [isDone,        setIsDone]        = useState(false);
 
-  const [englishLive, setEnglishLive]     = useState('');
-  const [nativeLive, setNativeLive]       = useState('');
-  const [refinedText, setRefinedText]     = useState('');
-  const [nativeLabel, setNativeLabel]     = useState('NATIVE UNICODE');
-  const [isDone, setIsDone]               = useState(false);
+  // Results
+  const [englishLive,  setEnglishLive]  = useState('');
+  const [nativeLive,   setNativeLive]   = useState('');
+  const [refinedText,  setRefinedText]  = useState('');
+  const [nativeLabel,  setNativeLabel]  = useState('MALAYALAM UNICODE');
+  const [copiedBox,    setCopiedBox]    = useState(null);
 
+  // Settings
+  const [selectedLang,  setSelectedLang]  = useState('ml');
   const [selectedStyle, setSelectedStyle] = useState('standard');
-  const [selectedLang, setSelectedLang]   = useState('ml');
 
-  const [showPlans, setShowPlans]         = useState(false);
-  const [plans, setPlans]                 = useState([]);
-  const [forgotSent, setForgotSent]       = useState(false);
-  const [forgotLoading, setForgotLoading] = useState(false);
-  const [copiedBox, setCopiedBox]         = useState(null);
+  // Plans
+  const [showPlans, setShowPlans] = useState(false);
+  const [plans,     setPlans]     = useState([]);
 
+  // Refs
   const mediaRecorderRef = useRef(null);
+  const mediaStreamRef   = useRef(null);
   const chunksRef        = useRef([]);
 
-  // ── Computed ─────────────────────────────────────────────────────────────────
-  const currentNativeLabel = NATIVE_LABELS[selectedLang] || 'NATIVE UNICODE';
-  const hasContent = englishLive || nativeLive || refinedText || streamStatus || loading || error;
+  // ── Persist token across refresh ──────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const t = localStorage.getItem('diya_token');
+    const e = localStorage.getItem('diya_email');
+    if (t && e) { setToken(t); setUserEmail(e); setScreen('app'); }
+  }, []);
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
+  // ── Sync native label when language changes ───────────────────────────────
+  useEffect(() => {
+    setNativeLabel(LANGUAGE_LABELS[selectedLang] || 'NATIVE UNICODE');
+  }, [selectedLang]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const resetResults = () => {
     setEnglishLive(''); setNativeLive(''); setRefinedText('');
     setStreamStatus(''); setIsDone(false); setError('');
-    setNativeLabel(NATIVE_LABELS[selectedLang] || 'NATIVE UNICODE');
+    setNativeLabel(LANGUAGE_LABELS[selectedLang] || 'NATIVE UNICODE');
   };
 
   const copyText = async (text, box) => {
@@ -83,123 +103,128 @@ export default function Home() {
     setTimeout(() => setCopiedBox(null), 2000);
   };
 
-  // ── Auth ──────────────────────────────────────────────────────────────────────
-  const handleLogin = async () => {
-    setAuthError('');
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  const handleLogin = async (e) => {
+    if (e) e.preventDefault();
+    if (loading) return;
+    setAuthError(''); setLoading(true);
     try {
       const form = new URLSearchParams();
-      form.append('username', email);
+      form.append('username', email.trim());
       form.append('password', password);
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...NGROK_HEADER },
-        body: form,
+      const res  = await fetch(API('/auth/login'), {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body:    form,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Login failed');
-      setToken(data.access_token);
-      setUserEmail(data.email);
-      setScreen('app');
-    } catch (e) { setAuthError(e.message); }
+      localStorage.setItem('diya_token', data.access_token);
+      localStorage.setItem('diya_email', data.email);
+      setToken(data.access_token); setUserEmail(data.email); setScreen('app');
+    } catch (err) { setAuthError(err.message); }
+    finally { setLoading(false); }
   };
 
-  const handleRegister = async () => {
-    setAuthError('');
+  const handleRegister = async (e) => {
+    if (e) e.preventDefault();
+    if (loading) return;
+    setAuthError(''); setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...NGROK_HEADER },
-        body: JSON.stringify({ email, password }),
+      const res  = await fetch(API('/auth/register'), {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: email.trim(), password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Registration failed');
-      setToken(data.token);
-      setUserEmail(data.email);
-      setScreen('app');
-    } catch (e) { setAuthError(e.message); }
+      localStorage.setItem('diya_token', data.token || data.access_token);
+      localStorage.setItem('diya_email', data.email);
+      setToken(data.token || data.access_token); setUserEmail(data.email); setScreen('app');
+    } catch (err) { setAuthError(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleForgotPassword = async () => {
     if (!email) { setAuthError('Enter your email address first.'); return; }
-    setForgotLoading(true); setAuthError('');
+    setForgotLoad(true); setAuthError('');
     try {
-      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...NGROK_HEADER },
-        body: JSON.stringify({ email }),
+      const res = await fetch(API('/auth/forgot-password'), {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: email.trim() }),
       });
       if (res.ok) setForgotSent(true);
-      else setAuthError('Could not send reset email. Please try again.');
+      else setAuthError('Could not send reset email.');
     } catch { setAuthError('Could not reach server.'); }
-    finally { setForgotLoading(false); }
+    finally { setForgotLoad(false); }
   };
 
-  const handleAuthKey = (e) => {
-    if (e.key === 'Enter') authMode === 'login' ? handleLogin() : handleRegister();
+  const handleLogout = () => {
+    localStorage.removeItem('diya_token');
+    localStorage.removeItem('diya_email');
+    setToken(''); setUserEmail(''); setScreen('login'); resetResults();
   };
 
-  // ── Recording ─────────────────────────────────────────────────────────────────
+  // ── Recording ─────────────────────────────────────────────────────────────
   const startRecording = async () => {
     resetResults();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      mediaStreamRef.current = stream;
+      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mr;
       chunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
       mr.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setLoading(true); setStreamStatus('Uploading audio...');
         await sendAudio(blob);
-        stream.getTracks().forEach(t => t.stop());
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach(t => t.stop());
+          mediaStreamRef.current = null;
+        }
       };
-      mr.start(250);
+      mr.start();
       setRecording(true);
     } catch { setError('Microphone access denied.'); }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      setRecording(false);
-      setLoading(true);
-      setStreamStatus('Uploading audio...');
     }
+    setRecording(false);
   };
 
-  // ── Audio processing (JSON endpoint) ─────────────────────────────────────────
+  // ── Audio submission (plain JSON — no SSE reader) ─────────────────────────
   const sendAudio = async (blob) => {
     try {
-      setError('');
-      setLoading(true);
-      setIsDone(false);
+      setError(''); setIsDone(false);
       setStreamStatus('Processing your speech...');
 
       const formData = new FormData();
-      formData.append('file', blob, 'recording.webm');
+      formData.append('file',  blob, 'recording.webm');
       formData.append('style', selectedStyle);
-      formData.append('lang', selectedLang);
+      formData.append('lang',  selectedLang);
 
-      const res = await fetch(`${API_BASE}/audio/process`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, ...NGROK_HEADER },
-        body: formData,
+      const res  = await fetch(API('/audio/process'), {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body:    formData,
       });
-
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.detail || data.error || data.message || 'Server error');
-      }
+      if (!res.ok) throw new Error(data.detail || data.error || 'Server error');
 
-      const eng    = data.english_text  || '';
-      const native = data.native_text   || '';
+      const eng    = data.english_text || '';
+      const native = data.native_text  || '';
       const label  = data.source_language_name
         ? `${data.source_language_name.toUpperCase()} UNICODE`
-        : (NATIVE_LABELS[selectedLang] || 'NATIVE UNICODE');
+        : (LANGUAGE_LABELS[selectedLang] || 'NATIVE UNICODE');
 
       if (!eng && !native) {
-        setError('No speech detected. Please speak clearly and try again.');
-        setIsDone(false);
+        setError('No speech detected. Please speak clearly for 5–10 seconds and try again.');
         return;
       }
 
@@ -212,17 +237,16 @@ export default function Home() {
 
     } catch (err) {
       setError(`Failed: ${err.message}`);
-      setIsDone(false);
     } finally {
       setLoading(false);
       setStreamStatus('');
     }
   };
 
-  // ── Payment ───────────────────────────────────────────────────────────────────
+  // ── Payment ───────────────────────────────────────────────────────────────
   const loadPlans = async () => {
     try {
-      const res = await fetch(`${API_BASE}/payment/plans`, { headers: NGROK_HEADER });
+      const res  = await fetch(API('/payment/plans'));
       const data = await res.json();
       setPlans(data.plans); setShowPlans(true);
     } catch { console.error('Failed to load plans'); }
@@ -230,20 +254,19 @@ export default function Home() {
 
   const handlePayment = async (planId) => {
     try {
-      const res = await fetch(`${API_BASE}/payment/create-order`, {
-        method: 'POST',
+      const order = await fetch(API('/payment/create-order'), {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ plan: planId }),
-      });
-      const order = await res.json();
+        body:    JSON.stringify({ plan: planId }),
+      }).then(r => r.json());
       new window.Razorpay({
         key: order.key_id, amount: order.amount, currency: order.currency,
-        name: 'Diya Voice AI', description: `${planId} Plan`, order_id: order.order_id,
-        handler: async (response) => {
-          const v = await fetch(`${API_BASE}/payment/verify`, {
-            method: 'POST',
+        name: 'Diya Voice AI', order_id: order.order_id,
+        handler: async (resp) => {
+          const v = await fetch(API('/payment/verify'), {
+            method:  'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ ...response, plan: planId }),
+            body:    JSON.stringify({ ...resp, plan: planId }),
           }).then(r => r.json());
           alert(v.message); setShowPlans(false);
         },
@@ -252,17 +275,19 @@ export default function Home() {
     } catch { alert('Payment failed. Please try again.'); }
   };
 
-  // ── LOGIN / REGISTER SCREEN ───────────────────────────────────────────────────
+  // ── LOGIN / REGISTER SCREEN ───────────────────────────────────────────────
   if (screen !== 'app') {
     return (
       <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6">
-        <h1 className="text-3xl font-bold mb-2 text-green-400">Diya Voice AI</h1>
+        <h1 className="text-3xl font-bold mb-1 text-green-400">Diya Voice AI</h1>
         <p className="text-gray-400 mb-8 text-sm">Speak any Indian language — get instant English translation</p>
+
         <div className="bg-gray-800 rounded-2xl p-8 w-full max-w-sm">
-          {/* Login / Register toggle */}
+          {/* Toggle */}
           <div className="flex rounded-xl bg-gray-700 p-1 mb-6">
-            {['login','register'].map(m => (
-              <button key={m} type="button" onClick={() => { setAuthMode(m); setAuthError(''); }}
+            {['login', 'register'].map(m => (
+              <button key={m} type="button"
+                onClick={() => { setAuthMode(m); setAuthError(''); setForgotSent(false); }}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition capitalize
                   ${authMode === m ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}>
                 {m}
@@ -270,37 +295,33 @@ export default function Home() {
             ))}
           </div>
 
-          <form onSubmit={e => { e.preventDefault(); authMode === 'login' ? handleLogin() : handleRegister(); }}>
+          <form onSubmit={authMode === 'login' ? handleLogin : handleRegister} autoComplete="on">
             <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              autoComplete="email"
-              inputMode="email"
+              type="email" name="email" placeholder="Email"
+              value={email} onChange={e => setEmail(e.target.value)}
+              autoComplete="email" inputMode="email" required
               className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-3 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-green-500" />
             <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+              type="password" name="password" placeholder="Password"
+              value={password} onChange={e => setPassword(e.target.value)}
+              autoComplete={authMode === 'login' ? 'current-password' : 'new-password'} required
               className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-4 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-green-500" />
 
             {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
             {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent — check your inbox.</p>}
 
-            <button type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 rounded-lg py-3 font-semibold mb-3 transition">
-              {authMode === 'login' ? 'Login' : 'Register'}
+            <button type="submit" disabled={loading}
+              className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 disabled:opacity-50 rounded-lg py-3 font-semibold mb-3 transition">
+              {loading ? 'Please wait...' : authMode === 'login' ? 'Login' : 'Register'}
             </button>
           </form>
 
           {authMode === 'login' && (
-            <p className="text-center text-sm mb-2">
+            <p className="text-center text-sm">
               <span onClick={handleForgotPassword}
-                className={`text-gray-500 hover:text-gray-300 cursor-pointer underline text-xs ${forgotLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-                {forgotLoading ? 'Sending...' : 'Forgot password?'}
+                className={`text-gray-500 hover:text-gray-300 cursor-pointer underline text-xs
+                  ${forgotLoad ? 'opacity-50 pointer-events-none' : ''}`}>
+                {forgotLoad ? 'Sending...' : 'Forgot password?'}
               </span>
             </p>
           )}
@@ -309,7 +330,9 @@ export default function Home() {
     );
   }
 
-  // ── MAIN APP ──────────────────────────────────────────────────────────────────
+  // ── MAIN APP ──────────────────────────────────────────────────────────────
+  const hasContent = englishLive || nativeLive || refinedText || streamStatus || loading || error;
+
   return (
     <main className="min-h-screen bg-gray-950 text-white flex flex-col items-center p-6 pb-16">
       <div className="w-full max-w-md">
@@ -319,9 +342,14 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-green-400">Diya Voice AI</h1>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500 hidden sm:block">{userEmail}</span>
-            <button onClick={loadPlans} className="text-xs text-yellow-400 border border-yellow-600 rounded px-2 py-1 hover:bg-yellow-400/10 transition">⭐ Upgrade</button>
-            <button onClick={() => { setToken(null); setScreen('login'); resetResults(); }}
-              className="text-xs text-gray-400 border border-gray-600 rounded px-2 py-1 hover:bg-gray-700 transition">Logout</button>
+            <button onClick={loadPlans}
+              className="text-xs text-yellow-400 border border-yellow-600 rounded px-2 py-1 hover:bg-yellow-400/10 transition">
+              ⭐ Upgrade
+            </button>
+            <button onClick={handleLogout}
+              className="text-xs text-gray-400 border border-gray-600 rounded px-2 py-1 hover:bg-gray-700 transition">
+              Logout
+            </button>
           </div>
         </div>
 
@@ -330,10 +358,10 @@ export default function Home() {
           <button
             onClick={recording ? stopRecording : startRecording}
             disabled={loading}
-            className={`w-28 h-28 rounded-full text-4xl transition-all duration-200 shadow-lg
+            className={`w-28 h-28 rounded-full text-4xl transition-all duration-200 shadow-lg select-none
               ${recording ? 'bg-red-600 hover:bg-red-700 animate-pulse'
               : loading   ? 'bg-gray-600 cursor-not-allowed opacity-60'
-              :             'bg-green-600 hover:bg-green-700'}`}>
+              :             'bg-green-600 hover:bg-green-700 active:scale-95'}`}>
             {loading ? '⏳' : recording ? '⏹' : '🎤'}
           </button>
           <p className="mt-3 text-sm text-gray-400">
@@ -347,9 +375,9 @@ export default function Home() {
           <div className="flex flex-wrap gap-2 justify-center">
             {LANGUAGES.map(l => (
               <button key={l.key}
-                onClick={() => { setSelectedLang(l.key); setNativeLabel(NATIVE_LABELS[l.key]); }}
+                onClick={() => setSelectedLang(l.key)}
                 disabled={recording || loading}
-                className={`px-4 py-1 rounded-full text-sm border transition-all
+                className={`px-4 py-1.5 rounded-full text-sm border transition-all
                   ${selectedLang === l.key
                     ? 'bg-blue-500 text-white border-blue-500 font-semibold'
                     : 'bg-transparent text-gray-400 border-gray-600 hover:border-gray-400'}
@@ -403,7 +431,7 @@ export default function Home() {
 
             {/* English Transcript */}
             <div className="bg-gray-800 rounded-lg overflow-hidden">
-              <div className="flex justify-between items-center px-4 py-2 bg-gray-750 border-b border-gray-700">
+              <div className="flex justify-between items-center px-4 py-2 border-b border-gray-700">
                 <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">English Transcript</p>
                 {englishLive && (
                   <button onClick={() => copyText(englishLive, 'en')}
@@ -431,8 +459,8 @@ export default function Home() {
                 )}
               </div>
               <p className="px-4 py-3 text-white leading-relaxed min-h-[48px] text-sm">
-                {refinedText || (isDone ? englishLive : '') ||
-                  <span className="text-gray-500 italic">Available after transcription...</span>}
+                {refinedText || (isDone ? englishLive : null)
+                  || <span className="text-gray-500 italic">Available after transcription...</span>}
               </p>
             </div>
 
@@ -440,7 +468,7 @@ export default function Home() {
             <div className="bg-gray-800 rounded-lg overflow-hidden">
               <div className="flex justify-between items-center px-4 py-2 border-b border-gray-700">
                 <p className="text-xs text-blue-400 uppercase tracking-wide font-semibold">
-                  {nativeLabel || currentNativeLabel}
+                  {nativeLabel}
                 </p>
                 {nativeLive && (
                   <button onClick={() => copyText(nativeLive, 'ml')}
@@ -450,7 +478,7 @@ export default function Home() {
                 )}
               </div>
               <p className="px-4 py-3 text-white text-xl leading-loose min-h-[64px] ml-text">
-                {nativeLive || <span className="text-gray-500 italic text-sm">Available after English pass...</span>}
+                {nativeLive || <span className="text-gray-500 italic text-sm">Native script appears here...</span>}
               </p>
             </div>
 
@@ -486,7 +514,9 @@ export default function Home() {
               ))}
             </div>
             <button onClick={() => setShowPlans(false)}
-              className="w-full mt-4 text-gray-400 hover:text-white text-sm transition">Cancel</button>
+              className="w-full mt-4 text-gray-400 hover:text-white text-sm transition">
+              Cancel
+            </button>
           </div>
         </div>
       )}
