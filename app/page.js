@@ -262,7 +262,7 @@ export default function Home() {
           {/* Login / Register toggle */}
           <div className="flex rounded-xl bg-gray-700 p-1 mb-6">
             {['login','register'].map(m => (
-              <button key={m} onClick={() => { setAuthMode(m); setAuthError(''); }}
+              <button key={m} type="button" onClick={() => { setAuthMode(m); setAuthError(''); }}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition capitalize
                   ${authMode === m ? 'bg-green-600 text-white' : 'text-gray-400 hover:text-white'}`}>
                 {m}
@@ -270,20 +270,31 @@ export default function Home() {
             ))}
           </div>
 
-          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-            onKeyDown={handleAuthKey}
-            className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-3 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-green-500" />
-          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
-            onKeyDown={handleAuthKey}
-            className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-4 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-green-500" />
+          <form onSubmit={e => { e.preventDefault(); authMode === 'login' ? handleLogin() : handleRegister(); }}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="email"
+              inputMode="email"
+              className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-3 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-green-500" />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+              className="w-full bg-gray-700 rounded-lg px-4 py-3 mb-4 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-green-500" />
 
-          {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
-          {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent — check your inbox.</p>}
+            {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
+            {forgotSent && <p className="text-green-400 text-sm mb-4 text-center">Reset link sent — check your inbox.</p>}
 
-          <button onClick={authMode === 'login' ? handleLogin : handleRegister}
-            className="w-full bg-green-600 hover:bg-green-700 rounded-lg py-3 font-semibold mb-3 transition">
-            {authMode === 'login' ? 'Login' : 'Register'}
-          </button>
+            <button type="submit"
+              className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 rounded-lg py-3 font-semibold mb-3 transition">
+              {authMode === 'login' ? 'Login' : 'Register'}
+            </button>
+          </form>
 
           {authMode === 'login' && (
             <p className="text-center text-sm mb-2">
