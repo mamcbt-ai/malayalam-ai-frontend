@@ -71,8 +71,10 @@ export default function Home() {
   const [selectedStyle, setSelectedStyle] = useState('standard');
 
   // Plans
-  const [showPlans, setShowPlans] = useState(false);
-  const [plans,     setPlans]     = useState([]);
+  const [showPlans,     setShowPlans]     = useState(false);
+  const [plans,         setPlans]         = useState([]);
+  const [usageLeft,     setUsageLeft]     = useState(null);
+  const [usageLimit,    setUsageLimit]    = useState(10);
 
   // Refs
   const mediaRecorderRef = useRef(null);
@@ -86,6 +88,22 @@ export default function Home() {
     const e = localStorage.getItem('diya_email');
     if (t && e) { setToken(t); setUserEmail(e); setScreen('app'); }
   }, []);
+
+  // ── Fetch usage after login ───────────────────────────────────────────────
+  useEffect(() => {
+    if (screen !== 'app' || !token) return;
+    fetch(API('/auth/me'), { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          const limit = data.plan === 'pro' ? 100 : data.plan === 'basic' ? 30 : 10;
+          const used  = data.recordings_today || 0;
+          setUsageLimit(limit);
+          setUsageLeft(Math.max(0, limit - used));
+        }
+      })
+      .catch(() => {});
+  }, [screen, token]);
 
   // ── Sync native label when language changes ───────────────────────────────
   useEffect(() => {
@@ -408,6 +426,16 @@ export default function Home() {
             </button>
           </div>
         </div>
+
+        {/* Usage counter */}
+        {usageLeft !== null && (
+          <div className={`text-center text-xs mb-3 ${usageLeft <= 2 ? 'text-red-400' : usageLeft <= 5 ? 'text-yellow-400' : 'text-gray-500'}`}>
+            {usageLeft} recording{usageLeft !== 1 ? 's' : ''} left today
+            {usageLeft <= 3 && (
+              <button onClick={loadPlans} className="ml-2 text-yellow-400 underline">Upgrade</button>
+            )}
+          </div>
+        )}
 
         {/* Record button */}
         <div className="flex flex-col items-center mb-6">
