@@ -304,6 +304,10 @@ export default function Home() {
       setNativeLabel(label);
       setStreamStatus('');
       setIsDone(true);
+      // Show warning if translation failed but native succeeded
+      if (native && !eng && data.translation_status === 'unavailable') {
+        setError('⚠️ English translation temporarily unavailable. Native script is shown above.');
+      }
 
     } catch (err) {
       setError(`Failed: ${err.message}`);
