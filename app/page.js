@@ -52,6 +52,8 @@ export default function Home() {
 
   // Recording state
   const [recording,     setRecording]     = useState(false);
+  const [recSeconds,    setRecSeconds]    = useState(0);
+  const recTimerRef = useRef(null);
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState('');
   const [streamStatus,  setStreamStatus]  = useState('');
@@ -219,12 +221,24 @@ export default function Home() {
       };
       mr.start(250);
       setRecording(true);
+      setRecSeconds(0);
+      recTimerRef.current = setInterval(() => setRecSeconds(s => s + 1), 1000);
     } catch {
       setError('Microphone access denied or recording is not supported on this device.');
     }
   };
 
   const stopRecording = () => {
+    clearInterval(recTimerRef.current);
+    if (recSeconds < 3) {
+      setError('Recording too short. Please speak for at least 5 seconds.');
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(t => t.stop());
+        mediaStreamRef.current = null;
+      }
+      setRecording(false);
+      return;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
@@ -407,8 +421,14 @@ export default function Home() {
             {loading ? '⏳' : recording ? '⏹' : '🎤'}
           </button>
           <p className="mt-3 text-sm text-gray-400">
-            {recording ? 'Recording… tap to stop' : loading ? 'Processing…' : 'Tap to start recording'}
+            {recording
+              ? `Recording… ${recSeconds}s (tap to stop${recSeconds < 5 ? ` — speak at least ${5 - recSeconds}s more` : ''})`
+              : loading ? 'Processing…'
+              : 'Tap to start recording'}
           </p>
+          {recording && recSeconds >= 5 && (
+            <p className="text-xs text-green-400 mt-1">✓ Good length — tap to stop when done</p>
+          )}
         </div>
 
         {/* Language selector */}
